@@ -49,15 +49,16 @@ async function main(){
   }
   // 讲个笑话，本来写了个Proxy对象，然后发现没用 :(
   // 最后发现是下文的index写bug了是-1
-  newGift.onclick = function(){
+  newGift.onclick = function( dt ){
     var contain = document.createElement( "div" )
     contain.className = "contain"
     var gname = document.createElement( "input" )
-    var index = json.main.new_gift.length
-    json.main.new_gift[index] = {}
+    var index = dt.index || json.main.new_gift.length
+    !(dt.index+1) && (json.main.new_gift[index] = {})
     update()
     gname.type = "text"
     gname.placeholder = "礼物名称"
+    dt.name && (gname.value = dt.name)
     gname.oninput = () => {
       json.main.new_gift[index].name = gname.value
       update()
@@ -65,6 +66,7 @@ async function main(){
     var ginfo = document.createElement( "input" )
     ginfo.type = "text"
     ginfo.placeholder = "礼物介绍"
+    dt.description && (ginfo.value = dt.description)
     ginfo.oninput = () => {
       json.main.new_gift[index].description = ginfo.value
       update()
@@ -72,6 +74,7 @@ async function main(){
     var gift = new Image()
     gift.className = "gift"
     gift.style.marginLeft = "1ch"
+    dt.icon && (gift.src = dt.icon)
     var icon = fileInput.cloneNode()
     icon.onchange = async function(){
       if( this.files[0] ){
@@ -92,20 +95,22 @@ async function main(){
     contain.appendChild( ginfo )
     modc.appendChild( contain )
   }
-  newCCover.onclick = function(){
+  newCCover.onclick = function( dt ){
     var contain = document.createElement( "div" )
     contain.className = "contain"
-    var index = json.main.new_character.length
-    json.main.new_character[index] = {}
+    var index = dt.index || json.main.new_character.length
+    !(dt.index+1) && (json.main.new_character[index] = {})
     var cname = document.createElement( "input" )
     cname.type = "text"
     cname.placeholder = "角色名称"
+    dt.name && (cname.value = dt.name)
     cname.oninput = () => {
       json.main.new_character[index].name = cname.value
       update()
     }
     var character = document.createElement( "textarea" )
     character.placeholder = "角色设定"
+    dt.character && (character.value = dt.character)
     character.oninput = () => {
       json.main.new_character[index].character = character.value
       update()
@@ -123,17 +128,19 @@ async function main(){
   newCAppend.onclick = function(){
     var contain = document.createElement( "div" )
     contain.className = "contain"
-    var index = json.main.add_character.length
-    json.main.add_character[index] = {}
+    var index = dt.index || json.main.add_character.length
+    !(dt.index+1) && (json.main.add_character[index] = {})
     var cname = document.createElement( "input" )
     cname.type = "text"
     cname.placeholder = "角色名称"
+    dt.name && (cname.value = dt.name)
     cname.oninput = () => {
       json.main.add_character[index].name = cname.value
       update()
     }
     var character = document.createElement( "textarea" )
     character.placeholder = "角色设定"
+    dt.character && (character.value = dt.character)
     character.oninput = () => {
       json.main.add_character[index].character = character.value
       update()
@@ -164,6 +171,32 @@ async function main(){
     download.href = URL.createObjectURL( new Blob( [jsonEncode( json )], {type: "application/gskm"} ) )
     download.click()
     Qmsg.success( "下载已开使" )
+  }
+  fgskm.onclick = async function(){
+    if( gskm.files[0] ){
+      json = JSON.parse( await readFile( gskm.files[0], "Text" ))
+      pname.value = json.header.name
+      pinfo.value = json.header.description
+      pimg.src = json.header.icon
+      update()
+      for( let index in json.main.new_gift ){
+        let gift = json.main.new_gift[index]
+        gift.index = index
+        newGift.onclick(gift)
+      }
+      for( let index in json.main.new_character ){
+        let c = json.main.new_character[index]
+        c.index = index
+        newCCover.onclick(c)
+      }
+      for( let index in json.main.add_character ){
+        let c = json.main.add_character[index]
+        c.index = index
+        newCAppend.onclick(c)
+      }
+    } else {
+      Qmsg.error( "未选择文件" )
+    }
   }
   Qmsg.success( "页面渲染完毕" )
 }
